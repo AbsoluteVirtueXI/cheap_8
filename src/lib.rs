@@ -1,4 +1,7 @@
 // TODO need a conversion from u16 to usize, because it is insane to always write "as"
+pub mod opcodes;
+pub mod types;
+use opcodes::{Instruction, Opcode};
 pub struct CHIP8 {
     /// Program counter
     pub pc: usize, // should be 16 bits
@@ -23,32 +26,27 @@ impl CHIP8 {
         }
     }
 
-    fn read_opcode(&self) -> u16 {
+    fn read_instruction(&self) -> Instruction {
         let p = self.pc;
         // TODO: maybe can find a more elegant soludtion
         let op_byte1 = self.memory[p] as u16;
         let op_byte2 = self.memory[p + 1] as u16;
-        op_byte1 << 8 | op_byte2
+        Instruction::from(op_byte1 << 8 | op_byte2)
     }
 
     pub fn run(&mut self) {
         loop {
-            let opcode = self.read_opcode();
+            // should only loop until end of memory
+            let instruction = self.read_instruction();
             self.pc += 2;
-            let c = ((opcode & 0xF000) >> 12) as u8;
-            let x = ((opcode & 0x0F00) >> 8) as u8;
-            let y = ((opcode & 0x00F0) >> 4) as u8;
-            let d = ((opcode & 0x000F) >> 0) as u8;
-            let nnn = opcode & 0x0FFF;
-
-            match (c, x, y, d) {
-                (0, 0, 0, 0) => {
-                    return;
+            match Opcode::from(instruction) {
+                Opcode::Opcode0000 => {
+                    return; // return instead of ignoring while loop is inefficient
                 }
-                (0x2, _, _, _) => self.call(nnn),
-                (0x0, 0x0, 0xE, 0xE) => self.ret(),
-                (0x8, _, _, 0x4) => self.add_xy(x, y),
-                _ => todo!("opcode: {:04X}", opcode),
+                Opcode::Opcode00EE => self.ret(),
+                Opcode::Opcode2NNN(nnn) => self.call(nnn.value()),
+                Opcode::Opcode8XY4(x, y) => self.add_xy(x.value(), y.value()),
+                Opcode::OpcodeUnknown => todo!("opcode: {:04X}", instruction.raw),
             }
         }
     }

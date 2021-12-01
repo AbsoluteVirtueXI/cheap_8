@@ -16,8 +16,8 @@ fn main() {
     chip8.memory[7] = 0x00;
     chip8.memory[8] = 0x21;
     chip8.memory[9] = 0x00;
-    chip8.memory[10] = 0x00;
-    chip8.memory[11] = 0x00;
+    //chip8.memory[10] = 0x00;
+    // chip8.memory[11] = 0x00;
     // function add twice
     chip8.memory[0x100] = 0x80;
     chip8.memory[0x101] = 0x14;

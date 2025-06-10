@@ -65,7 +65,7 @@ impl CHIP8 {
     }
 
     fn call(&mut self, addr: u16) {
-        if self.sp > self.stack.len() {
+        if self.sp >= self.stack.len() {
             panic!("Stack overflow");
         }
 
@@ -81,5 +81,33 @@ impl CHIP8 {
         self.sp -= 1;
         let addr = self.stack[self.sp];
         self.pc = addr as usize;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn call_and_ret_update_stack_and_pc() {
+        let mut chip = CHIP8::new();
+        chip.pc = 0x200;
+        chip.call(0x300);
+
+        assert_eq!(chip.sp, 1);
+        assert_eq!(chip.stack[0], 0x200);
+        assert_eq!(chip.pc, 0x300);
+
+        chip.ret();
+        assert_eq!(chip.sp, 0);
+        assert_eq!(chip.pc, 0x200);
+    }
+
+    #[test]
+    #[should_panic(expected = "Stack overflow")]
+    fn call_panics_on_stack_overflow() {
+        let mut chip = CHIP8::new();
+        chip.sp = chip.stack.len();
+        chip.call(0x200);
     }
 }
